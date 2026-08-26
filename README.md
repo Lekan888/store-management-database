@@ -45,4 +45,4 @@ queries, and data analysis.
 
 ## Author
 
-Lekan
+Toriola Lekan
