@@ -16,6 +16,32 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
+-- Table structure for table `audit_log`
+--
+
+DROP TABLE IF EXISTS `audit_log`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `audit_log` (
+  `log_id` int NOT NULL AUTO_INCREMENT,
+  `transaction_id` int DEFAULT NULL,
+  `action` varchar(50) DEFAULT NULL,
+  `log_date` datetime DEFAULT NULL,
+  PRIMARY KEY (`log_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `audit_log`
+--
+
+LOCK TABLES `audit_log` WRITE;
+/*!40000 ALTER TABLE `audit_log` DISABLE KEYS */;
+INSERT INTO `audit_log` VALUES (1,6,'INSERT','2026-08-26 21:02:04');
+/*!40000 ALTER TABLE `audit_log` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `customers`
 --
 
@@ -54,6 +80,7 @@ CREATE TABLE `employees` (
   `first_name` varchar(50) NOT NULL,
   `last_name` varchar(50) NOT NULL,
   `hourly_pay` decimal(5,2) DEFAULT NULL,
+  `salary` decimal(10,2) DEFAULT NULL,
   `hire_date` date NOT NULL,
   `job` varchar(50) DEFAULT 'employee',
   `department` varchar(50) DEFAULT 'General',
@@ -69,7 +96,7 @@ CREATE TABLE `employees` (
 
 LOCK TABLES `employees` WRITE;
 /*!40000 ALTER TABLE `employees` DISABLE KEYS */;
-INSERT INTO `employees` VALUES (1001,'John','Smith',20.50,'2022-08-21','Manager','Management'),(1002,'Lisa','Anderson',24.00,'2023-04-15','Senior Cashier','Sales'),(1003,'Mark','Taylor',18.75,'2023-11-05','Staff','IT'),(1004,'Jessica','Brown',20.50,'2024-01-10','Staff','Sales');
+INSERT INTO `employees` VALUES (1001,'John','Smith',50.00,104000.00,'2022-08-21','Manager','Management'),(1002,'Lisa','Anderson',24.00,49920.00,'2023-04-15','Senior Cashier','Sales'),(1003,'Mark','Taylor',18.75,39000.00,'2023-11-05','Staff','IT'),(1004,'Jessica','Brown',20.50,42640.00,'2024-01-10','Staff','Sales');
 /*!40000 ALTER TABLE `employees` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -132,7 +159,7 @@ CREATE TABLE `transactions` (
   KEY `product_id` (`product_id`),
   CONSTRAINT `transactions_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`customer_id`),
   CONSTRAINT `transactions_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `products` (`product_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -141,7 +168,7 @@ CREATE TABLE `transactions` (
 
 LOCK TABLES `transactions` WRITE;
 /*!40000 ALTER TABLE `transactions` DISABLE KEYS */;
-INSERT INTO `transactions` VALUES (1,25.99,1,1),(2,45.50,2,2),(3,60.75,3,5),(4,35.00,1,4),(5,12.99,4,3);
+INSERT INTO `transactions` VALUES (1,25.99,1,1),(2,45.50,2,2),(3,60.75,3,5),(4,35.00,1,4),(5,12.99,4,3),(6,40.00,2,1);
 /*!40000 ALTER TABLE `transactions` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -172,4 +199,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-08-26 19:10:30
+-- Dump completed on 2026-08-26 21:03:19
