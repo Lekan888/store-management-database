@@ -21,6 +21,8 @@ products, employees, and store transactions.
 - JOINs
 - Subqueries
 - ORDER BY
+- Stored Procedures
+- Triggers
 
 ## Database Structure
 
@@ -30,6 +32,7 @@ The database contains four main tables:
 - `products`
 - `employees`
 - `transactions`
+- `audit_log`
 
 ## Technologies
 
