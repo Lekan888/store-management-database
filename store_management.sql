@@ -83,7 +83,7 @@ CREATE TABLE `employees` (
   `salary` decimal(10,2) DEFAULT NULL,
   `hire_date` date NOT NULL,
   `job` varchar(50) DEFAULT 'employee',
-  `department` varchar(50) DEFAULT 'General',
+  `department` varchar(50) DEFAULT NULL,
   PRIMARY KEY (`employee_id`),
   CONSTRAINT `chk_department` CHECK ((`department` in (_utf8mb4'HR',_utf8mb4'Management',_utf8mb4'Sales',_utf8mb4'IT'))),
   CONSTRAINT `employees_chk_1` CHECK ((`hourly_pay` > 0))
@@ -184,7 +184,7 @@ UNLOCK TABLES;
 /*!50001 SET character_set_results     = utf8mb4 */;
 /*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
-/*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
+/*!50013 SQL SECURITY INVOKER */
 /*!50001 VIEW `sales_view` AS select `transactions`.`transaction_id` AS `transaction_id`,`customers`.`first_name` AS `first_name`,`customers`.`last_name` AS `last_name`,`products`.`product_name` AS `product_name`,`transactions`.`amount` AS `amount` from ((`transactions` join `customers` on((`transactions`.`customer_id` = `customers`.`customer_id`))) join `products` on((`transactions`.`product_id` = `products`.`product_id`))) */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
