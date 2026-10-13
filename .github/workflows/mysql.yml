@@ -24,30 +24,38 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=12
-    env:
-      MYSQL_CONTAINER: ${{ job.services.mysql.id }}
     steps:
       - uses: actions/checkout@v4
       - name: Test verification output handling
         run: python3 -m unittest discover -s tests -p 'test_*.py' -v
       - name: Import schema and sample data
+        env:
+          MYSQL_CONTAINER: ${{ job.services.mysql.id }}
         run: >-
           docker exec -i -e MYSQL_PWD=local-demo-only "$MYSQL_CONTAINER"
           mysql -u root store_portfolio_test < store_management.sql
       - name: Verify clean fixture
+        env:
+          MYSQL_CONTAINER: ${{ job.services.mysql.id }}
         run: |
           docker exec -i -e MYSQL_PWD=local-demo-only "$MYSQL_CONTAINER" \
             mysql -u root --batch --raw --skip-column-names store_portfolio_test < verify.sql > verify-results.tsv
           python3 scripts/check_verification.py --expected-count 31 < verify-results.tsv
       - name: Run all six reports
+        env:
+          MYSQL_CONTAINER: ${{ job.services.mysql.id }}
         run: >-
           docker exec -i -e MYSQL_PWD=local-demo-only "$MYSQL_CONTAINER"
           mysql -u root --table store_portfolio_test < reports.sql
       - name: Verify constraints, optional links and rollback
+        env:
+          MYSQL_CONTAINER: ${{ job.services.mysql.id }}
         run: >-
           docker exec -i -e MYSQL_PWD=local-demo-only "$MYSQL_CONTAINER"
           mysql -u root --table store_portfolio_test < tests/regression.sql
       - name: Ensure verification gate rejects a changed fixture
+        env:
+          MYSQL_CONTAINER: ${{ job.services.mysql.id }}
         run: |
           docker exec -i -e MYSQL_PWD=local-demo-only "$MYSQL_CONTAINER" \
             mysql -u root store_portfolio_test -e "UPDATE transactions SET amount = 26.99 WHERE transaction_id = 1;"
@@ -60,6 +68,8 @@ jobs:
           docker exec -i -e MYSQL_PWD=local-demo-only "$MYSQL_CONTAINER" \
             mysql -u root store_portfolio_test -e "UPDATE transactions SET amount = 25.99 WHERE transaction_id = 1;"
       - name: Confirm restored fixture
+        env:
+          MYSQL_CONTAINER: ${{ job.services.mysql.id }}
         run: |
           docker exec -i -e MYSQL_PWD=local-demo-only "$MYSQL_CONTAINER" \
             mysql -u root --batch --raw --skip-column-names store_portfolio_test < verify.sql > restored-results.tsv
