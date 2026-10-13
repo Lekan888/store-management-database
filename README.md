@@ -8,6 +8,12 @@ A MySQL learning project with five InnoDB tables, two foreign-key relationships,
 | --- | --- | --- |
 | `store_management.sql` | Tables, constraints, sample records, and sales view | 1: import into a new database |
 | `verify.sql` | 31 read-only checks with expected values and PASS/FAIL results | 2: run after a successful import |
+| `reports.sql` | Six read-only reporting queries with stable IDs and explicit ordering | 3: run on the imported fixture |
+| `tests/regression.sql` | Constraint, optional-link and rollback tests; temporary test procedure | 4: disposable test schema only |
+| `scripts/check_verification.py` | Converts MySQL TSV verification results into a process exit status | Automated verification |
+| `.github/workflows/mysql.yml` | MySQL 8.0 import, reports, behavior tests and failure-detection checks | GitHub Actions |
+| `docs/portfolio.md` | Resume bullets, project descriptions and a short case study | Portfolio copy |
+| `docs/project-walkthrough.md` | Short demonstration and interview prompts | Presentation guide |
 | `README.md` | Setup, schema, report examples, constraint checks, and limitations | Read before importing |
 
 The dump manages its internal table-loading order. Do not run its table sections individually.
@@ -34,6 +40,9 @@ CREATE DATABASE store_management_demo
 USE store_management_demo;
 SOURCE store_management.sql;
 SOURCE verify.sql;
+SOURCE reports.sql;
+SOURCE tests/regression.sql;
+SOURCE verify.sql; -- Confirm the fixture after rollback and test-procedure cleanup.
 ```
 
 Create a **new disposable schema**. If its name already exists, stop and choose another name before importing. The dump contains DROP TABLE statements, so rerunning it in an existing target replaces its five tables and sample data. There is no CREATE DATABASE or USE statement in the dump; the selected schema determines where the objects are created. Check the import output for errors before verification.
@@ -78,6 +87,9 @@ The checks cover object/engine counts, all row counts above, both foreign keys a
 | Procedure/function definitions / triggers | 0 / 0 |
 
 ## Reporting examples
+
+[`reports.sql`](reports.sql) contains six runnable reports: transaction detail, customer totals, repeat buyers, product transaction totals, products above the average listed price and customers above the average recorded total. The detail report uses LEFT JOINs to retain optional links; the existing `sales_view` keeps its documented INNER JOIN behavior. Customer/product summaries include records with no transactions, and the CTE average includes all customers.
+
 
 ### Customer totals, including customers with no transactions
 
@@ -149,6 +161,22 @@ SELECT amount FROM transactions WHERE transaction_id = 1; -- 25.99 again
 ```
 
 Keep expected-error checks separate from the normal verification batch. Run `verify.sql` afterward to confirm the sample remains intact. These examples demonstrate transaction behavior, not a stock-control or payment-processing workflow.
+
+## Automated verification and behavioral tests
+
+The [GitHub Actions workflow](.github/workflows/mysql.yml) imports the dump into a fresh MySQL 8.0 container, checks all 31 existing verification results, runs all six reports, and executes [behavioral tests](tests/regression.sql). It also changes one fixture value deliberately, verifies that the gate fails, restores the value, and checks the clean fixture again.
+
+The read-only `verify.sql` remains usable in Workbench. For automation, [`scripts/check_verification.py`](scripts/check_verification.py) reads the `mysql --batch --raw --skip-column-names` output. It returns a nonzero exit code for FAIL, a mismatched expected/actual value, duplicate or missing checks, malformed rows, or missing database metadata. It requires Python 3 and only its standard library.
+
+`tests/regression.sql` needs CREATE ROUTINE, ALTER ROUTINE and EXECUTE privileges in addition to the original import permissions. Run it only in a disposable schema. It creates a temporary test procedure, exercises constraints and optional relationships, rolls back its data changes and drops the procedure after success. The exception handler rolls back before propagating an error; a failed test can leave the procedure behind. Auto-increment counters can advance even after rollback.
+
+Run the verification-gate unit tests independently:
+
+```sh
+python3 -m unittest discover -s tests -p 'test_*.py' -v
+```
+
+[Portfolio copy](docs/portfolio.md) and a [short interview walkthrough](docs/project-walkthrough.md) describe the implemented scope and future work separately.
 
 ## Portfolio description
 
