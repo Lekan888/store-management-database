@@ -1,0 +1,76 @@
+name: Verify MySQL project
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: local-demo-only
+          MYSQL_DATABASE: store_portfolio_test
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test verification output handling
+        run: python3 -m unittest discover -s tests -p 'test_*.py' -v
+      - name: Import schema and sample data
+        env:
+          MYSQL_CONTAINER: ${{ job.services.mysql.id }}
+        run: >-
+          docker exec -i -e MYSQL_PWD=local-demo-only "$MYSQL_CONTAINER"
+          mysql -u root store_portfolio_test < store_management.sql
+      - name: Verify clean fixture
+        env:
+          MYSQL_CONTAINER: ${{ job.services.mysql.id }}
+        run: |
+          docker exec -i -e MYSQL_PWD=local-demo-only "$MYSQL_CONTAINER" \
+            mysql -u root --batch --raw --skip-column-names store_portfolio_test < verify.sql > verify-results.tsv
+          python3 scripts/check_verification.py --expected-count 31 < verify-results.tsv
+      - name: Run all six reports
+        env:
+          MYSQL_CONTAINER: ${{ job.services.mysql.id }}
+        run: >-
+          docker exec -i -e MYSQL_PWD=local-demo-only "$MYSQL_CONTAINER"
+          mysql -u root --table store_portfolio_test < reports.sql
+      - name: Verify constraints, optional links and rollback
+        env:
+          MYSQL_CONTAINER: ${{ job.services.mysql.id }}
+        run: >-
+          docker exec -i -e MYSQL_PWD=local-demo-only "$MYSQL_CONTAINER"
+          mysql -u root --table store_portfolio_test < tests/regression.sql
+      - name: Ensure verification gate rejects a changed fixture
+        env:
+          MYSQL_CONTAINER: ${{ job.services.mysql.id }}
+        run: |
+          docker exec -i -e MYSQL_PWD=local-demo-only "$MYSQL_CONTAINER" \
+            mysql -u root store_portfolio_test -e "UPDATE transactions SET amount = 26.99 WHERE transaction_id = 1;"
+          docker exec -i -e MYSQL_PWD=local-demo-only "$MYSQL_CONTAINER" \
+            mysql -u root --batch --raw --skip-column-names store_portfolio_test < verify.sql > changed-results.tsv
+          if python3 scripts/check_verification.py --expected-count 31 < changed-results.tsv; then
+            echo 'Changed fixture was incorrectly accepted'
+            exit 1
+          fi
+          docker exec -i -e MYSQL_PWD=local-demo-only "$MYSQL_CONTAINER" \
+            mysql -u root store_portfolio_test -e "UPDATE transactions SET amount = 25.99 WHERE transaction_id = 1;"
+      - name: Confirm restored fixture
+        env:
+          MYSQL_CONTAINER: ${{ job.services.mysql.id }}
+        run: |
+          docker exec -i -e MYSQL_PWD=local-demo-only "$MYSQL_CONTAINER" \
+            mysql -u root --batch --raw --skip-column-names store_portfolio_test < verify.sql > restored-results.tsv
+          python3 scripts/check_verification.py --expected-count 31 < restored-results.tsv
