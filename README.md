@@ -12,8 +12,6 @@ A MySQL learning project with five InnoDB tables, two foreign-key relationships,
 | `tests/regression.sql` | Constraint, optional-link and rollback tests; temporary test procedure | 4: disposable test schema only |
 | `scripts/check_verification.py` | Converts MySQL TSV verification results into a process exit status | Automated verification |
 | `.github/workflows/mysql.yml` | MySQL 8.0 import, reports, behavior tests and failure-detection checks | GitHub Actions |
-| `docs/portfolio.md` | Resume bullets, project descriptions and a short case study | Portfolio copy |
-| `docs/project-walkthrough.md` | Short demonstration and interview prompts | Presentation guide |
 | `README.md` | Setup, schema, report examples, constraint checks, and limitations | Read before importing |
 
 The dump manages its internal table-loading order. Do not run its table sections individually.
@@ -164,6 +162,8 @@ Keep expected-error checks separate from the normal verification batch. Run `ver
 
 ## Automated verification and behavioral tests
 
+**Workflow triggers:** pushes to `main` (including merged PRs), pull requests when opened, reopened or updated with new commits, and manual runs through `workflow_dispatch`. The PR trigger has no target-branch filter, so it covers PRs targeting any branch. A push to another branch alone does not trigger this workflow; an open PR can trigger it instead. There are no path filters, so README-only changes also run verification.
+
 The [GitHub Actions workflow](.github/workflows/mysql.yml) imports the dump into a fresh MySQL 8.0 container, checks all 31 existing verification results, runs all six reports, and executes [behavioral tests](tests/regression.sql). It also changes one fixture value deliberately, verifies that the gate fails, restores the value, and checks the clean fixture again.
 
 The read-only `verify.sql` remains usable in Workbench. For automation, [`scripts/check_verification.py`](scripts/check_verification.py) reads the `mysql --batch --raw --skip-column-names` output. It returns a nonzero exit code for FAIL, a mismatched expected/actual value, duplicate or missing checks, malformed rows, or missing database metadata. It requires Python 3 and only its standard library.
@@ -176,7 +176,6 @@ Run the verification-gate unit tests independently:
 python3 -m unittest discover -s tests -p 'test_*.py' -v
 ```
 
-[Portfolio copy](docs/portfolio.md) and a [short interview walkthrough](docs/project-walkthrough.md) describe the implemented scope and future work separately.
 
 ## Portfolio description
 
